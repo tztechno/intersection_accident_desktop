@@ -1,8 +1,7 @@
 # Intersection Accident Simulator Desktop App - User Manual
 
 > [!NOTE]
-> - 🇯🇵 日本語版マニュアル: [使用マニュアル.md](使用マニュアル.md)
-> - 🇺🇸 English Manual: [MANUAL_EN.md](MANUAL_EN.md)
+> 日本語版のマニュアルはこちら: [使用マニュアル.md](使用マニュアル.md)
 
 This application is a desktop simulator for traffic accident analysis, sightline tracking, and blind-spot awareness at a two-lane intersection and surrounding town loop block (figure-of-eight course), powered by **MuJoCo WASM** physics and **Three.js** 3D rendering.
 
