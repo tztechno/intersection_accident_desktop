@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>交差点シミュレーター（8の字周回）</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <div class="view" id="main-view">
+        <canvas id="main-canvas"></canvas>
+      </div>
+
+      <aside class="left">
+        <section class="tile">
+          <b class="view-title" data-i18n="overhead">🛰 上空 · 視線</b>
+          <div class="view" id="overhead-view" style="aspect-ratio: 1">
+            <canvas id="overhead-canvas"></canvas>
+          </div>
+        </section>
+
+        <section class="panel settings" id="settings" hidden>
+          <b data-i18n="set.head">交通設定</b>
+          <label class="set"><span data-i18n="set.oncoming"></span>
+            <input type="range" data-key="oncoming" min="0" max="40" step="1" /><output data-unit="unit.permin"></output></label>
+          <label class="set"><span data-i18n="set.cross"></span>
+            <input type="range" data-key="cross" min="0" max="30" step="1" /><output data-unit="unit.permin"></output></label>
+          <label class="set"><span data-i18n="set.speed"></span>
+            <input type="range" data-key="speed" min="20" max="80" step="5" /><output data-suffix=" km/h"></output></label>
+          <label class="set"><span data-i18n="set.truck"></span>
+            <input type="range" data-key="truckPct" min="0" max="60" step="5" /><output data-suffix=" %"></output></label>
+          <label class="set"><span data-i18n="set.moto"></span>
+            <input type="range" data-key="motoPct" min="0" max="60" step="5" /><output data-suffix=" %"></output></label>
+          <label class="set"><span data-i18n="set.peds"></span>
+            <input type="range" data-key="peds" min="0" max="40" step="1" /><output data-unit="unit.pplmin"></output></label>
+          <label class="set"><span data-i18n="set.bikes"></span>
+            <input type="range" data-key="bikes" min="0" max="20" step="1" /><output data-unit="unit.permin"></output></label>
+          <hr />
+          <label class="set"><span data-i18n="set.gap"></span>
+            <input type="range" data-key="gap" min="1" max="8" step="0.5" /><output data-suffix=" s"></output></label>
+          <label class="set"><span data-i18n="set.reaction"></span>
+            <input type="range" data-key="reaction" min="0.3" max="2" step="0.1" /><output data-suffix=" s"></output></label>
+          <label class="set"><span data-i18n="set.yellow"></span>
+            <input type="range" data-key="yellowRun" min="0" max="100" step="5" /><output data-suffix=" %"></output></label>
+          <label class="set"><span data-i18n="set.keepLeft"></span>
+            <input type="range" data-key="keepLeft" min="0" max="1" step="1" /><output data-onoff="1"></output></label>
+          <p class="note" data-i18n="set.note"></p>
+          <button class="btn" id="defaults" style="--bg:#555a66" data-i18n="set.defaults">初期値に戻す</button>
+        </section>
+      </aside>
+
+      <aside class="right">
+        <pre class="hud" id="hud"></pre>
+        <section class="panel log">
+          <b data-i18n="log.head">衝突ログ</b>
+          <ol id="log"></ol>
+        </section>
+      </aside>
+
+      <div class="alert" id="alert" hidden>
+        <div class="alert-box">
+          <b id="alert-title"></b>
+          <span id="alert-sub"></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="row">
+          <div class="group" data-i18n-title="mode.title">
+            <button class="btn seg" data-mode="auto" data-i18n="mode.auto">🤖 自動</button>
+            <button class="btn seg" data-mode="pedal" data-i18n="mode.pedal">🦶 ペダル</button>
+            <button class="btn seg" data-mode="manual" data-i18n="mode.manual">🎮 手動</button>
+          </div>
+          <div class="group" data-i18n-title="view.title">
+            <button class="btn seg" data-view="driver" data-i18n="view.driver">🪟 運転席</button>
+            <button class="btn seg" data-view="chase" data-i18n="view.chase">🚗 後方</button>
+            <button class="btn seg" data-view="orbit" data-i18n="view.orbit">🎥 自由</button>
+            <button class="btn seg" data-view="corner" data-i18n="view.corner">📹 定点</button>
+          </div>
+          <div class="group">
+            <button class="btn" style="--bg:#50a050" id="start" data-i18n="sim.start" data-i18n-title="sim.start.title">▶ 開始</button>
+            <button class="btn" style="--bg:#a06a30" id="stop" data-i18n="sim.stop" data-i18n-title="sim.stop.title">⏸ 一時停止</button>
+            <button class="btn" style="--bg:#707070" id="reset" data-i18n-title="sim.reset.title">↺</button>
+          </div>
+          <div class="group" data-i18n-title="speed.title">
+            <button class="btn seg" data-speed="0.25">¼×</button>
+            <button class="btn seg" data-speed="0.5">½×</button>
+            <button class="btn seg" data-speed="1">1×</button>
+            <button class="btn seg" data-speed="2">2×</button>
+          </div>
+          <button class="btn toggle" style="--bg:#4a4a58" id="settings-btn" aria-pressed="false" data-i18n-title="settings.title">⚙</button>
+          <button class="btn toggle" style="--bg:#6a4a8a" id="replay-btn" aria-pressed="false" data-i18n="replay.btn" data-i18n-title="replay.title">🎞 リプレイ</button>
+          <button class="btn lang" id="lang" data-i18n-title="lang.title">EN / 日本語</button>
+        </div>
+        <div class="row replay-only">
+          <button class="btn" style="--bg:#6a4a8a" id="replay-play" data-i18n-title="replay.play.title">⏸</button>
+          <input id="replay-seek" type="range" min="0" max="1" step="0.01" value="0" data-i18n-title="replay.seek.title" />
+          <output id="replay-time" class="replay-time">0:00.0 / 0:00.0</output>
+          <button class="btn" style="--bg:#3f6f5a" id="replay-save" data-i18n="replay.save" data-i18n-title="replay.save.title">💾 保存</button>
+          <button class="btn" style="--bg:#3f5f8a" id="replay-open" data-i18n="replay.open" data-i18n-title="replay.open.title">📂 開く</button>
+          <input id="replay-file" type="file" accept=".n55r" hidden />
+          <button class="btn toggle" style="--bg:#a03a3a" id="replay-video" aria-pressed="false" data-i18n="replay.video" data-i18n-title="replay.video.title">⏺ 動画</button>
+          <button class="btn" style="--bg:#707070" id="replay-exit" data-i18n="replay.exit" data-i18n-title="replay.exit.title">✕ 終了</button>
+        </div>
+        <div class="row driver-only live-only">
+          <label class="slider-row manual-only" data-i18n-title="steer.title">
+            <span>🔄</span>
+            <input id="steer" type="range" min="-0.6" max="0.6" step="0.005" value="0" />
+            <output id="steer-readout">0.00</output>
+          </label>
+          <output id="pedal-speed" class="speed-readout" data-i18n-title="hud.speed">0 km/h</output>
+          <div class="group">
+            <button class="btn toggle" style="--bg:#5cb85c" data-pedal="accel" aria-pressed="false" data-i18n="pedal.accel" data-i18n-title="pedal.accel.title">🔺 加速</button>
+            <button class="btn toggle" style="--bg:#3a7fc0" data-pedal="hold" aria-pressed="false" data-i18n="pedal.hold" data-i18n-title="pedal.hold.title">⏸ 維持</button>
+            <button class="btn toggle" style="--bg:#f0ad4e" data-pedal="brake" aria-pressed="false" data-i18n="pedal.brake" data-i18n-title="pedal.brake.title">🔻 ブレーキ</button>
+          </div>
+        </div>
+        <div id="status" class="status"></div>
+        <div class="keys" data-i18n="help.keys"></div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
